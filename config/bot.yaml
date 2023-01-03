@@ -1,0 +1,17 @@
+step_time: 0.001
+
+initial_position:
+  x: 5.0
+  y: 5.0
+  theta: 0.0
+  v: 0.0
+  omega: 0.0
+
+map:
+  x: 10.0
+  y: 10.0
+
+model:
+  L: 0.05
+  max_a: 1.0
+  max_v: 1.0
