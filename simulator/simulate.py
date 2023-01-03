@@ -1,3 +1,4 @@
+from distutils.cmd import Command
 from math import fabs, cos, sin
 import numpy as np
 
@@ -18,16 +19,27 @@ class Simulator:
                         init_state.omega)
         self.state = state
         self.ts = cfg.step_time
+        self.is_running = False
+        self.sim_time = 0
 
     def get_state(self):
         return self.state
     
+    def get_sim_time(self):
+        return self.sim_time
+
     def next_step(self, state, cmd):
+        # print(self.is_running)
+        if not self.is_running:
+            self.state = state
+            return
         if state == None or not self.isvalid(state):
             raise Exception("please input valid state")
         
         state_next = self.RK4(state, cmd, self.ts)
         self.state = state_next
+        self.sim_time += self.cfg.step_time
+        # print("haha")
 
     def isvalid(self, state):
         x = state.x
@@ -80,3 +92,7 @@ class Simulator:
         f.append((u_l + u_r)/2)
         f.append((u_r - u_l)/L)
         return f
+
+    def begin(self):
+        self.is_running = True
+        print("begin simulation")
