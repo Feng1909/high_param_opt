@@ -29,7 +29,6 @@ class Simulator:
         return self.sim_time
 
     def next_step(self, state, cmd):
-        # print(self.is_running)
         if not self.is_running:
             self.state = state
             return
@@ -96,3 +95,11 @@ class Simulator:
     def begin(self):
         self.is_running = True
         print("begin simulation")
+    
+    def stop(self):
+        self.is_running = False
+        print("stop simulation")
+
+    def is_running(self):
+        return self.is_running
+    

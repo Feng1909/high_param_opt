@@ -1,3 +1,4 @@
+import math
 from tkinter import YES
 from turtle import ycor
 import yaml
@@ -9,9 +10,6 @@ import time as time__
 from simulator.simulate import Simulator
 from utils.type import State, ControlCommand
 
-def save_callback():
-    print("Save Clicked")
-
 if __name__ == "__main__":
     with open('config/bot.yaml') as yamlfile:
         cfgs = yaml.load(yamlfile, Loader=yaml.FullLoader)
@@ -19,7 +17,7 @@ if __name__ == "__main__":
     simulator = Simulator(cfgs)
     state = simulator.get_state()
     print(state.state())
-    cmd = ControlCommand(10, 5)
+    cmd = ControlCommand(0, 0)
     time = 0
     x = [state.x]
     y = [state.y]
@@ -67,7 +65,7 @@ if __name__ == "__main__":
                 with dpg.child_window(autosize_x=True, height=40):
                     with dpg.group(horizontal=True):
                         dpg.add_button(label="Run", callback=simulator.begin, width=40, height=20)
-                        dpg.add_button(label="Stop", callback=save_callback, width=40, height=20)
+                        dpg.add_button(label="Stop", callback=simulator.stop, width=40, height=20)
                         # dpg.add_button(label="Next Step", callback=save_callback, width=80, height=20)
                         # dpg.add_button(label="Print Graph", callback=save_callback, width=90, height=20)
                         # dpg.add_button(label="Save Graph", callback=save_callback, width=90, height=20)
@@ -114,20 +112,12 @@ if __name__ == "__main__":
             dpg.set_axis_limits('full_track_yaxis', min(y) - 0.04, max(y) + 0.04)
             dpg.set_value('lap_info', f"Time: {simulator.get_sim_time():.2f}s")
             dpg.render_dearpygui_frame()
+            cmd = ControlCommand(math.cos(time), 0)
         # print(time)
         time += cfgs.step_time
         simulator.next_step(state, cmd)
         state = simulator.get_state()
-        # print(state.state())
-        if state.x == 5:
-            cmd = ControlCommand(10,5)
-        else:
-            cmd = ControlCommand(0, 0)
+        # time__.sleep(0.1)
         if time >= 1000:
             time__.sleep(1000)
             break
-    
-    # plt.plot(x,y)
-    # plt.show()
-
-        # break
