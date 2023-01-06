@@ -1,5 +1,5 @@
 from distutils.cmd import Command
-from math import fabs, cos, sin, hypot, pi
+from math import fabs, cos, sin, hypot, pi, atan2
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -22,9 +22,10 @@ class Simulator:
                         init_state.omega)
         self.state = state
         self.ts = cfg.step_time
-        self.is_running = False
+        self.is_running_flag = False
         self.sim_time = 0
         self.path = []
+        self.finished = False
 
         self.load_map()
 
@@ -35,7 +36,7 @@ class Simulator:
         return self.sim_time
 
     def next_step(self, state, cmd):
-        if not self.is_running:
+        if not self.is_running_flag:
             self.state = state
             return
         if state == None or not self.isvalid(state):
@@ -102,15 +103,15 @@ class Simulator:
         return f
 
     def begin(self):
-        self.is_running = True
+        self.is_running_flag = True
         print("begin simulation")
     
     def stop(self):
-        self.is_running = False
+        self.is_running_flag = False
         print("stop simulation")
 
     def is_running(self):
-        return self.is_running
+        return self.is_running_flag
     
     def load_map(self):
         if not os.path.exists(self.cfg.map_name):
@@ -150,7 +151,6 @@ class Simulator:
             psic = np.arctan2(dy, dx)
             psic_final = np.arctan2(f_y[0]-f_y[-1], f_x[0]-f_x[-1])
             psic = np.append(psic, psic_final)
-
             for i in range(len(f_x)):
                 self.path.append([f_x[i], f_y[i], psic[i]])
         print(f"Load map: {self.cfg.map_name} finished")
@@ -168,7 +168,27 @@ class Simulator:
             num += 1
         if index == -1:
             raise Exception("find location error")
-        return self.path[index+1: index+1+20]
+        path_next = self.path[index+1: index+1+self.cfg.ref_ahead]
+        if index+1+self.cfg.ref_ahead > len(self.path):
+            self.stop()
+            self.is_running_flag = False
+            self.finished = True
+            print("mission finished")
+        path_return = []
+        for i in path_next:
+            x1 = i[0]-self.state.x
+            y1 = i[1]-self.state.y
+            D = hypot(x1, y1)
+            Phi = atan2(y1, x1)-self.state.theta
+            theta = i[2] - self.state.theta
+            while theta < -pi:
+                theta += 2*pi
+            while theta > pi:
+                theta -= 2*pi
+            path_return.append([D*cos(Phi),
+                                D*sin(Phi),
+                                theta])
+        return path_return
         
     def get_full_path(self):
         x = []
@@ -177,3 +197,6 @@ class Simulator:
             x.append(i[0])
             y.append(i[1])
         return x, y
+
+    def is_finished(self):
+        return self.finished

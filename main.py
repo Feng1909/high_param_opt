@@ -79,12 +79,13 @@ if __name__ == "__main__":
                     # # series belong to a y axis
                     dpg.add_scatter_series([], [], label="Predicted Path", parent="yaxis", tag="pre_path")
                     dpg.add_scatter_series([], [], label="Reference Path", parent="yaxis", tag="ref_path")
+                    dpg.add_scatter_series([], [], label="Car Position", parent="yaxis", tag="car_position_part")
 
                     # # apply theme to series
                     dpg.bind_item_theme("pre_path", "plot_purplish_blue_scatter")
                     dpg.bind_item_theme("ref_path", "plot_orange_scatter")
                     
-            with dpg.child_window(width=400, autosize_y=True):
+            with dpg.child_window(width=300, autosize_y=True):
                 dpg.add_text("Real-Time MPC results", color=(255, 255, 255))
                 dpg.add_slider_float(tag="vr", label="vr", default_value=0, min_value=0, max_value=10, width=120)
                 dpg.add_slider_float(tag="vl", label="vl", default_value=0, min_value=0, max_value=10, width=120)
@@ -107,7 +108,7 @@ if __name__ == "__main__":
     dpg.set_value('full_map', [full_path_x, full_path_y])
     dpg.set_axis_limits('full_track_x', min(full_path_x) - 1, max(full_path_x) + 1)
     dpg.set_axis_limits('full_track_y', min(full_path_y) - 1, max(full_path_y) + 1)
-    while True:
+    while True and not simulator.is_finished():
         if time - time_[-1] > 0.1:
             dpg.render_dearpygui_frame()
             time_.append(time)
@@ -116,25 +117,37 @@ if __name__ == "__main__":
         simulator.next_step(state, cmd)
         state = simulator.get_state()
         dpg.set_value('car_position', [[state.x], [state.y]])
+        dpg.set_value('car_position_part', [[0], [0]])
         path = simulator.get_path()
         controller.set_path(path)
         controller.set_state(state)
         cmd = controller.get_cmd()
-        ref_x = [state.x]
-        ref_y = [state.y]
-        ref_theta = [state.theta]
+        ref_x = []
+        ref_y = []
+        ref_theta = []
         for i in path:
-            ref_x.append(i[0])
-            ref_y.append(i[1])
+            # ref_x.append(i[0])
+            # ref_y.append(i[1])
+            ref_y.append(i[0])
+            ref_x.append(-i[1])
             ref_theta.append(i[2])
         dpg.set_value('ref_path', [ref_x, ref_y])
-        dpg.set_axis_limits('xaxis', min(ref_x) - 0.04, max(ref_x) + 0.04)
-        dpg.set_axis_limits('yaxis', min(ref_y) - 0.04, max(ref_y) + 0.04)
+        dpg.set_axis_limits('xaxis', min(ref_x) - 0.4, max(ref_x) + 0.4)
+        dpg.set_axis_limits('yaxis', min(ref_y) - 0.1, max(ref_y) + 0.1)
         dpg.set_value('lap_info', f"Time: {simulator.get_sim_time():.2f}s")
-        time_2 = time__.time()
-        if cfgs.step_time > time_2 - time_1:
-            time__.sleep(cfgs.step_time - time_2 + time_1)
+        dpg.set_value('theta', state.theta)
+        v_l = state.v - cfgs.model.L * state.omega / 2
+        v_r = state.v + cfgs.model.L * state.omega / 2
+        dpg.set_value('vl', v_l)
+        dpg.set_value('vr', v_r)
+        dpg.set_value('r', state.omega)
+        if cfgs.visual:
             dpg.render_dearpygui_frame()
+            time_2 = time__.time()
+            if cfgs.step_time > time_2 - time_1:
+                time__.sleep(cfgs.step_time - time_2 + time_1)
         # break
         if time >= 1000:
             break
+    
+    time__.sleep(10)

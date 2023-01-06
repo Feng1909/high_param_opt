@@ -19,18 +19,14 @@ class PurePursuit:
     
     def calculate_cmd(self):
         destination = self.path[self.cfgs.look_ahead]
-        D = hypot(self.state.x - destination[0], self.state.y - destination[1])
-        theta = destination[2] - self.state.theta
-        R = D/(2*sin(theta))
+        D = hypot(destination[0], destination[1])
+        theta = destination[2]
+        R = D/(2*sin(theta)) * 0.4
         L = self.cfgs.model.L
         v_l = 2*R/(L+2*R) * self.cfgs.model.max_v
         v_r = 2*(L+R)/(L+2*R) * self.cfgs.model.max_v
-        print()
-        self.cmd.u_l = min(self.cfgs.model.max_a, v_l-self.state.omega*(1-L/2))
-        self.cmd.u_l = max(self.cmd.u_l, - self.cfgs.model.max_a)
-        self.cmd.u_r = min(self.cfgs.model.max_a, v_r-self.state.omega*(1+L/2))
-        self.cmd.u_r = max(self.cmd.u_r, - self.cfgs.model.max_a)
-
+        self.cmd.u_l = (v_l-(self.state.v - self.cfgs.model.L * self.state.omega / 2))
+        self.cmd.u_r = (v_r-(self.state.v + self.cfgs.model.L * self.state.omega / 2))
     
     def get_cmd(self):
         self.calculate_cmd()
