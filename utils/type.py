@@ -2,7 +2,7 @@ class State:
     '''
     x, y, theta in global and v, omega
     '''
-    def __init__(self, x, y, theta, v, omega):
+    def __init__(self, x=0, y=0, theta=0, v=0, omega=0):
         self.x = x
         self.y = y
         self.theta = theta
@@ -29,7 +29,7 @@ class State:
 
 
 class ControlCommand:
-    def __init__(self, cmd_l, cmd_r) -> None:
+    def __init__(self, cmd_l=0, cmd_r=0) -> None:
         self.u_r = cmd_r
         self.u_l = cmd_l
     

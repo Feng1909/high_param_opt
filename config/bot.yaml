@@ -12,6 +12,14 @@ map:
   y: 10.0
 
 model:
-  L: 0.05
+  L: 0.1
   max_a: 1.0
-  max_v: 1.0
+  max_v: 0.5
+
+map_name: "map/spline.csv"
+
+look_ahead: 5
+
+ds: 0.01
+
+visual: true

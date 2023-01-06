@@ -1,6 +1,9 @@
 from distutils.cmd import Command
-from math import fabs, cos, sin
+from math import fabs, cos, sin, hypot, pi
 import numpy as np
+import os
+import matplotlib.pyplot as plt
+from scipy import interpolate
 
 from utils.type import State, ControlCommand
 
@@ -21,6 +24,9 @@ class Simulator:
         self.ts = cfg.step_time
         self.is_running = False
         self.sim_time = 0
+        self.path = []
+
+        self.load_map()
 
     def get_state(self):
         return self.state
@@ -36,9 +42,12 @@ class Simulator:
             raise Exception("please input valid state")
         
         state_next = self.RK4(state, cmd, self.ts)
+        while state_next.theta > 2*pi:
+            state_next.theta -= 2*pi
+        while state_next.theta < - 2*pi:
+            state_next.theta += 2*pi
         self.state = state_next
         self.sim_time += self.cfg.step_time
-        # print("haha")
 
     def isvalid(self, state):
         x = state.x
@@ -103,3 +112,68 @@ class Simulator:
     def is_running(self):
         return self.is_running
     
+    def load_map(self):
+        if not os.path.exists(self.cfg.map_name):
+            raise Exception("map do not exist")
+        else:
+            with open(self.cfg.map_name, 'r') as f:
+                pathes = f.readlines()
+            if len(pathes) == 0:
+                raise Exception("path empty!")
+            x = []
+            y = []
+            for i in pathes:
+                i = i.replace('\n', '')
+                i = i.replace(' ', '')
+                coordinates = i.split(',')
+                x.append(float(coordinates[0])+self.cfg.initial_position.x)
+                y.append(float(coordinates[1])+self.cfg.initial_position.y)
+            x = np.array(x)
+            y = np.array(y)
+            # get approximate length of track
+            stot = 0
+            for i in range(x.size-1):
+                stot += hypot(x[i+1]-x[i], y[i+1]-y[i])
+            stot = (stot//self.cfg.ds)*self.cfg.ds
+            print("length of track: stot = ", str(round(stot, 2)))
+            N = int(stot/self.cfg.ds)
+            unew = np.arange(0, 1.0, 1.0/N)
+            # center
+            tck, u = interpolate.splprep([x,y], s=0)
+            out = interpolate.splev(unew, tck)
+            f_x = out[0]
+            f_y = out[1]
+            
+            # set psic
+            dx = np.diff(f_x)
+            dy = np.diff(f_y)
+            psic = np.arctan2(dy, dx)
+            psic_final = np.arctan2(f_y[0]-f_y[-1], f_x[0]-f_x[-1])
+            psic = np.append(psic, psic_final)
+
+            for i in range(len(f_x)):
+                self.path.append([f_x[i], f_y[i], psic[i]])
+        print(f"Load map: {self.cfg.map_name} finished")
+
+    def get_path(self):
+        x = self.state.x
+        y = self.state.y
+        min_now = 9999
+        index = -1
+        num = 0
+        for i in self.path:
+            if hypot(x - i[0], y - i[1]) < min_now:
+                min_now = hypot(x - i[0], y - i[1])
+                index = num
+            num += 1
+        if index == -1:
+            raise Exception("find location error")
+        return self.path[index+1: index+1+20]
+        
+    def get_full_path(self):
+        x = []
+        y = []
+        for i in self.path:
+            x.append(i[0])
+            y.append(i[1])
+        return x, y
