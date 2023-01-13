@@ -1,14 +1,10 @@
-import math
-from tkinter import YES
-from turtle import ycor
 import yaml
 from easydict import EasyDict as edict
-import matplotlib.pyplot as plt
 import dearpygui.dearpygui as dpg
 import time as time__
 
 from simulator.simulate import Simulator
-from controller.control import PurePursuit
+from controller.control import PurePursuit, MPC
 from utils.type import State, ControlCommand
 
 if __name__ == "__main__":
@@ -16,7 +12,8 @@ if __name__ == "__main__":
         cfgs = yaml.load(yamlfile, Loader=yaml.FullLoader)
         cfgs = edict(cfgs)
     simulator = Simulator(cfgs)
-    controller = PurePursuit(cfgs)
+    # controller = PurePursuit(cfgs)
+    controller = MPC(cfgs)
     state = simulator.get_state()
     cmd = ControlCommand(0, 0)
     time = 0
@@ -122,6 +119,7 @@ if __name__ == "__main__":
         controller.set_path(path)
         controller.set_state(state)
         cmd = controller.get_cmd()
+        # print("ur: ",cmd.u_r,"ul: ",cmd.u_l)
         ref_x = []
         ref_y = []
         ref_theta = []
@@ -131,9 +129,17 @@ if __name__ == "__main__":
             ref_y.append(i[0])
             ref_x.append(-i[1])
             ref_theta.append(i[2])
+        pre_path = controller.get_pre_path()
+        pre_x = []
+        pre_y = []
+        for i in pre_path:
+            # print(i)
+            pre_x.append(-i[1])
+            pre_y.append(i[0])
         dpg.set_value('ref_path', [ref_x, ref_y])
+        dpg.set_value('pre_path', [pre_x, pre_y])
         dpg.set_axis_limits('xaxis', min(ref_x) - 0.4, max(ref_x) + 0.4)
-        dpg.set_axis_limits('yaxis', min(ref_y) - 0.1, max(ref_y) + 0.1)
+        dpg.set_axis_limits('yaxis',- 0.1, max(ref_y) + 0.1)
         dpg.set_value('lap_info', f"Time: {simulator.get_sim_time():.2f}s")
         dpg.set_value('theta', state.theta)
         v_l = state.v - cfgs.model.L * state.omega / 2
