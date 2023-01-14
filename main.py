@@ -124,8 +124,6 @@ if __name__ == "__main__":
         ref_y = []
         ref_theta = []
         for i in path:
-            # ref_x.append(i[0])
-            # ref_y.append(i[1])
             ref_y.append(i[0])
             ref_x.append(-i[1])
             ref_theta.append(i[2])
@@ -136,6 +134,8 @@ if __name__ == "__main__":
             # print(i)
             pre_x.append(-i[1])
             pre_y.append(i[0])
+        # print(path[0])
+        # print(pre_path[0])
         dpg.set_value('ref_path', [ref_x, ref_y])
         dpg.set_value('pre_path', [pre_x, pre_y])
         dpg.set_axis_limits('xaxis', min(ref_x) - 0.4, max(ref_x) + 0.4)

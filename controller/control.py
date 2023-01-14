@@ -45,7 +45,7 @@ class MPC:
         self.max_v = self.cfg.model.max_v
         self.ref_path = []
         self.pre_path = []
-        self.cmd = ControlCommand(0.1, 0)
+        self.cmd = ControlCommand(0, 0)
         self.state = State()
 
         self.opti = ca.Opti()
@@ -61,13 +61,17 @@ class MPC:
         self.pos_v = self.opt_states[:, 3]
         self.pos_omega = self.opt_states[:, 4]
         # ref_path
-        self.ref_path = []
-        for i in range(self.N):
-            t = self.opti.parameter(5)
-            self.ref_path.append(t)
+        self.ref_path = self.opti.parameter(self.N, 5)
         # kinetic model
-        self.f = lambda x, u: ca.vertcat(*[x[3]*ca.cos(x[2]),
-                                           x[3]*ca.sin(x[2]),
+        self.f = lambda x, u: ca.vertcat(*[x[3]*np.cos(x[2]),
+                                           x[3]*np.sin(x[2]),
+                                           x[4],
+                                           (u[0]+u[1])/2,
+                                           (u[1]-u[0])/self.L])
+
+
+        self.f_np = lambda x, u: np.array([x[3]*np.cos(x[2]),
+                                           x[3]*np.sin(x[2]),
                                            x[4],
                                            (u[0]+u[1])/2,
                                            (u[1]-u[0])/self.L])
@@ -79,7 +83,7 @@ class MPC:
             k2 = self.f(self.opt_states[k, :]+self.dt/2*k1.T, self.opt_controls[k, :])
             k3 = self.f(self.opt_states[k, :]+self.dt/2*k2.T, self.opt_controls[k, :])
             k4 = self.f(self.opt_states[k, :]+self.dt*k3.T,   self.opt_controls[k, :])
-            x_next = self.opt_states[k, :] + self.dt/6*(k1+k2+k3+k4).T
+            x_next = self.opt_states[k, :] + self.dt*(k1/6.+k2/3.+k3/3.+k4/6.).T
             self.opti.subject_to(self.opt_states[k+1, :] == x_next)
         
         # cost function
@@ -95,7 +99,8 @@ class MPC:
         for i in range(self.N):
             self.obj = self.obj + ca.mtimes([(self.opt_states[i, :]-self.ref_path[i].T),
                                               self.Q,
-                                              (self.opt_states[i, :]-self.ref_path[i].T).T])
+                                              (self.opt_states[i, :]-self.ref_path[i].T).T]) + \
+                                  ca.mtimes([(self.opt_controls[i, :]), self.R, (self.opt_controls[i, :]).T])
         
         self.opti.minimize(self.obj)
         self.opti.subject_to(self.opti.bounded(0, self.pos_v, self.max_v))
@@ -111,9 +116,9 @@ class MPC:
         ref_v = 0.5
         next_states = np.zeros((self.N+1, 5))
         for i in range(self.N):
-            x = i/10
-            state = [x,0,0,ref_v,0]
-            self.opti.set_value(self.ref_path[i], state)
+            x = i
+            state = [x,x,0,ref_v,0]
+            self.opti.set_value(self.ref_path[i, :], state)
         self.opti.set_initial(self.opt_controls, np.zeros((self.N, 2)))
         self.opti.set_initial(self.opt_states, next_states)
         sol = self.opti.solve()
@@ -139,20 +144,41 @@ class MPC:
                 state.append(j)
             state.append(desire_v)
             state.append(0)
-            print(state)
-            self.opti.set_value(self.ref_path[i], state)
+            # print(state)
+            self.opti.set_value(self.ref_path[i, :], state)
         self.opti.set_initial(self.opt_controls, np.zeros((self.N, 2)))
-        self.opti.set_initial(self.opt_states, next_states)
+        # init_state = np.zeros((30, 5))
+        # init_state = np.concatenate(([[0,0,0,self.state.v,self.state.omega]], init_state), axis=0)
+        init_state = []
+        for i in range(31):
+            init_state.append([0,0,0,self.state.v,self.state.omega])
+        init_state = np.array(init_state)
+        print(init_state)
+        self.opti.set_initial(self.opt_states, init_state)
         sol = self.opti.solve()
-        [self.cmd.u_l, self.cmd.u_r] = sol.value(self.opt_controls)[0]
+        [self.cmd.u_r, self.cmd.u_l] = sol.value(self.opt_controls)[0]
+        # self.cmd.u_r = -self.cmd.u_r
         pre = sol.value(self.opt_states)
-        # print(sol.value(self.obj))
+        print(sol.value(self.obj))
         self.pre_path = []
         for i in pre:
-            self.pre_path.append([i[0], i[1]])
-    
+            self.pre_path.append([round(i[0],3), round(i[1],3), round(i[2],3), round(i[3],3), round(i[4],3)])
+        x = []
+        x.append(self.path[0][0])
+        x.append(self.path[0][1])
+        x.append(self.path[0][2])
+        x.append(desire_v)
+        x.append(0)
+        print("x: ",x)
+        print("ul, ur: ",sol.value(self.opt_controls)[0])
+        print(sol.value(self.opt_states))
+        print(self.f_np(x, sol.value(self.opt_controls)[0]))
+        
     def get_cmd(self):
+        t1 = time.time()
         self.calculate_cmd()
+        t2 = time.time()
+        # print(t2-t1)
         return self.cmd
     
     def get_pre_path(self):

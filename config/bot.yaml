@@ -3,7 +3,7 @@ step_time: 0.001
 initial_position:
   x: 5.0
   y: 5.0
-  theta: 0.92
+  theta: 0.9
   v: 0.0
   omega: 0.0
 
@@ -32,13 +32,11 @@ MPC:
   dt: 0.01
   desire_v: 2
   input:
-    ul: 0.1
-    ur: 0.1
-    dul: 0.1
-    dur: 0.1
+    ul: 0.001
+    ur: 0.001
   state:
-    x: 100
-    y: 100
-    theta: 100
-    v: 0.1
-    omega: 100
+    x: 1
+    y: 1
+    theta: 0.1
+    v: 10
+    omega: 10
