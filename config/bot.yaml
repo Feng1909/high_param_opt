@@ -14,7 +14,7 @@ map:
 model:
   L: 0.1
   max_a: 10
-  max_v: 5
+  max_v: 2
   lf: 0.1
 
 map_name: "map/spline.csv"
@@ -25,18 +25,18 @@ ds: 0.01
 
 visual: true
 
-ref_ahead: 32
+ref_ahead: 33
 
 MPC:
   N: 30
   dt: 0.01
-  desire_v: 2
+  desire_v: 1.5
   input:
     ul: 0.001
     ur: 0.001
   state:
-    x: 1
-    y: 1
-    theta: 0.1
+    x: 100
+    y: 100
+    theta: 20
     v: 10
-    omega: 10
+    omega: 0.01

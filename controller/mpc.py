@@ -4,7 +4,7 @@
 import casadi as ca
 import numpy as np
 import time
-from draw import Draw_MPC_tracking
+# from draw import Draw_MPC_tracking
 
 def shift_movement(T, t0, x0, u, x_n, f):
     f_value = f(x0, u[0])
@@ -139,6 +139,10 @@ if __name__ == '__main__':
         xx.append(current_state)
         ## estimate the new desired trajectories and controls
         next_trajectories, next_controls = desired_command_and_trajectory(t0, T, current_state, N)
+        print("next")
+        print(next_trajectories)
+        print(next_states)
+        print(current_state)
         mpciter = mpciter + 1
 
 
@@ -148,4 +152,4 @@ if __name__ == '__main__':
     print(t_v.mean())
     print((time.time() - start_time)/(mpciter))
     ## draw function
-    draw_result = Draw_MPC_tracking(rob_diam=0.3, init_state=init_state, robot_states=xx )
+    # draw_result = Draw_MPC_tracking(rob_diam=0.3, init_state=init_state, robot_states=xx )

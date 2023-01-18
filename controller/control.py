@@ -69,12 +69,6 @@ class MPC:
                                            (u[0]+u[1])/2,
                                            (u[1]-u[0])/self.L])
 
-
-        self.f_np = lambda x, u: np.array([x[3]*np.cos(x[2]),
-                                           x[3]*np.sin(x[2]),
-                                           x[4],
-                                           (u[0]+u[1])/2,
-                                           (u[1]-u[0])/self.L])
         # init condition
         self.opti.subject_to(self.opt_states[0, :] == self.ref_path[0].T)
         for k in range(self.N): # loop over control intervals
@@ -97,9 +91,9 @@ class MPC:
                           self.cfg.MPC.input.ur])
         self.obj = 0 # cost
         for i in range(self.N):
-            self.obj = self.obj + ca.mtimes([(self.opt_states[i, :]-self.ref_path[i].T),
+            self.obj = self.obj + ca.mtimes([(self.opt_states[i, :]-self.ref_path[i, :]),
                                               self.Q,
-                                              (self.opt_states[i, :]-self.ref_path[i].T).T]) + \
+                                              (self.opt_states[i, :]-self.ref_path[i, :]).T]) + \
                                   ca.mtimes([(self.opt_controls[i, :]), self.R, (self.opt_controls[i, :]).T])
         
         self.opti.minimize(self.obj)
@@ -138,41 +132,33 @@ class MPC:
     def calculate_cmd(self):
         desire_v = self.cfg.MPC.desire_v
         next_states = np.zeros((self.N+1, 5))
+        init_state = []
+        init_state.append([0,0,0,0,0])
         for i in range(self.N):
             state = []
             for j in self.path[i]:
                 state.append(j)
             state.append(desire_v)
             state.append(0)
-            # print(state)
+            if i == 0:
+                state = [0,0,0,self.state.v, self.state.omega]
+            init_state.append([state[0],
+                               state[1],
+                               state[2],
+                               state[3],
+                               state[4],])
             self.opti.set_value(self.ref_path[i, :], state)
         self.opti.set_initial(self.opt_controls, np.zeros((self.N, 2)))
-        # init_state = np.zeros((30, 5))
-        # init_state = np.concatenate(([[0,0,0,self.state.v,self.state.omega]], init_state), axis=0)
-        init_state = []
-        for i in range(31):
-            init_state.append([0,0,0,self.state.v,self.state.omega])
         init_state = np.array(init_state)
-        print(init_state)
         self.opti.set_initial(self.opt_states, init_state)
         sol = self.opti.solve()
-        [self.cmd.u_r, self.cmd.u_l] = sol.value(self.opt_controls)[0]
-        # self.cmd.u_r = -self.cmd.u_r
+        [self.cmd.u_l, self.cmd.u_r] = sol.value(self.opt_controls)[0]
         pre = sol.value(self.opt_states)
-        print(sol.value(self.obj))
+        # print(sol.value(self.obj))
         self.pre_path = []
+        print(pre[0])
         for i in pre:
             self.pre_path.append([round(i[0],3), round(i[1],3), round(i[2],3), round(i[3],3), round(i[4],3)])
-        x = []
-        x.append(self.path[0][0])
-        x.append(self.path[0][1])
-        x.append(self.path[0][2])
-        x.append(desire_v)
-        x.append(0)
-        print("x: ",x)
-        print("ul, ur: ",sol.value(self.opt_controls)[0])
-        print(sol.value(self.opt_states))
-        print(self.f_np(x, sol.value(self.opt_controls)[0]))
         
     def get_cmd(self):
         t1 = time.time()

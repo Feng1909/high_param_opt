@@ -119,7 +119,6 @@ if __name__ == "__main__":
         controller.set_path(path)
         controller.set_state(state)
         cmd = controller.get_cmd()
-        # print("ur: ",cmd.u_r,"ul: ",cmd.u_l)
         ref_x = []
         ref_y = []
         ref_theta = []
@@ -131,11 +130,8 @@ if __name__ == "__main__":
         pre_x = []
         pre_y = []
         for i in pre_path:
-            # print(i)
-            pre_x.append(-i[1])
             pre_y.append(i[0])
-        # print(path[0])
-        # print(pre_path[0])
+            pre_x.append(-i[1])
         dpg.set_value('ref_path', [ref_x, ref_y])
         dpg.set_value('pre_path', [pre_x, pre_y])
         dpg.set_axis_limits('xaxis', min(ref_x) - 0.4, max(ref_x) + 0.4)
