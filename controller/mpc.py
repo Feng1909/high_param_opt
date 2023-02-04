@@ -123,6 +123,7 @@ if __name__ == '__main__':
         opti.set_value(opt_u_ref, next_controls)
         ## provide the initial guess of the optimization targets
         opti.set_initial(opt_controls, u0.reshape(N, 2))# (N, 2)
+        # print(next_states)
         opti.set_initial(opt_states, next_states) # (N+1, 3)
         ## solve the problem once again
         t_ = time.time()
@@ -131,6 +132,7 @@ if __name__ == '__main__':
         ## obtain the control input
         u_res = sol.value(opt_controls)
         x_m = sol.value(opt_states)
+        print(x_m)
         # print(x_m[:3])
         u_c.append(u_res[0, :])
         t_c.append(t0)
@@ -139,10 +141,10 @@ if __name__ == '__main__':
         xx.append(current_state)
         ## estimate the new desired trajectories and controls
         next_trajectories, next_controls = desired_command_and_trajectory(t0, T, current_state, N)
-        print("next")
-        print(next_trajectories)
-        print(next_states)
-        print(current_state)
+        # print("next")
+        # print(next_trajectories)
+        # print(next_states)
+        # print(current_state)
         mpciter = mpciter + 1
 
 

@@ -53,6 +53,7 @@ class MPC:
         self.opt_controls = self.opti.variable(self.N, 2)
         self.ul = self.opt_controls[:, 0]
         self.ur = self.opt_controls[:, 1]
+        self.cmd_all = np.zeros((self.N, 2))
         # x, y, theta, v, omega
         self.opt_states = self.opti.variable(self.N+1, 5)
         self.pos_x = self.opt_states[:, 0]
@@ -70,7 +71,7 @@ class MPC:
                                            (u[1]-u[0])/self.L])
 
         # init condition
-        self.opti.subject_to(self.opt_states[0, :] == self.ref_path[0].T)
+        self.opti.subject_to(self.opt_states[0, :] == self.ref_path[0, :])
         for k in range(self.N): # loop over control intervals
             # Runge-Kutta 4 integration
             k1 = self.f(self.opt_states[k, :],              self.opt_controls[k, :])
@@ -131,7 +132,7 @@ class MPC:
     
     def calculate_cmd(self):
         desire_v = self.cfg.MPC.desire_v
-        next_states = np.zeros((self.N+1, 5))
+        # print(desire_v-self.state.v)
         init_state = []
         init_state.append([0,0,0,self.state.v,self.state.omega])
         old_theta = 0
@@ -150,17 +151,17 @@ class MPC:
                                state[3],
                                state[4]])
             old_theta = state[2]
-            print(round(state[3], 2))
             self.opti.set_value(self.ref_path[i, :], state)
-        self.opti.set_initial(self.opt_controls, np.zeros((self.N, 2)))
+
+        # self.opti.set_initial(self.opt_controls, np.zeros((self.N, 2)))
+        self.opti.set_initial(self.opt_controls, self.cmd_all)
         init_state = np.array(init_state)
         self.opti.set_initial(self.opt_states, init_state)
         sol = self.opti.solve()
-        [self.cmd.u_l, self.cmd.u_r] = sol.value(self.opt_controls)[0]
+        self.cmd_all = sol.value(self.opt_controls)
+        [self.cmd.u_l, self.cmd.u_r] = self.cmd_all[0]
         pre = sol.value(self.opt_states)
-        # print(sol.value(self.obj))
         self.pre_path = []
-        print('speed: ', round(pre[0][3], 2))
         for i in pre:
             self.pre_path.append([round(i[0],3), round(i[1],3), round(i[2],3), round(i[3],3), round(i[4],3)])
         
@@ -168,7 +169,7 @@ class MPC:
         t1 = time.time()
         self.calculate_cmd()
         t2 = time.time()
-        # print(t2-t1)
+        print('solve time: ', t2-t1)
         return self.cmd
     
     def get_pre_path(self):

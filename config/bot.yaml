@@ -37,6 +37,6 @@ MPC:
   state:
     x: 100
     y: 100
-    theta: 20
-    v: 10
+    theta: 2
+    v: 1
     omega: 0.01
