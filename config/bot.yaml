@@ -1,4 +1,4 @@
-step_time: 0.001
+step_time: 0.01
 
 initial_position:
   x: 5.0
@@ -14,7 +14,7 @@ map:
 model:
   L: 0.1
   max_a: 10
-  max_v: 2
+  max_v: 10
   lf: 0.1
 
 map_name: "map/spline.csv"
@@ -25,7 +25,9 @@ ds: 0.01
 
 visual: true
 
-ref_ahead: 33
+controller: 'mpc'  # ['mpc', 'purepursuit']
+
+ref_ahead: 50
 
 MPC:
   N: 30
@@ -37,6 +39,6 @@ MPC:
   state:
     x: 100
     y: 100
-    theta: 2
+    theta: 0.2
     v: 1
     omega: 0.01

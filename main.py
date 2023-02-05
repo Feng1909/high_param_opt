@@ -7,20 +7,8 @@ from simulator.simulate import Simulator
 from controller.control import PurePursuit, MPC
 from utils.type import State, ControlCommand
 
-if __name__ == "__main__":
-    with open('config/bot.yaml') as yamlfile:
-        cfgs = yaml.load(yamlfile, Loader=yaml.FullLoader)
-        cfgs = edict(cfgs)
-    simulator = Simulator(cfgs)
-    # controller = PurePursuit(cfgs)
-    controller = MPC(cfgs)
-    state = simulator.get_state()
-    cmd = ControlCommand(0, 0)
-    time = 0
-    time_ = [0]
-    
+def init_gui(simulator):
     dpg.create_context()
-
     # Layout Define
     with dpg.window(tag="Primary Window", label="Very Good Simulator", autosize=True):
         # create a theme for the plot
@@ -98,23 +86,34 @@ if __name__ == "__main__":
                             dpg.add_scatter_series([], [], label="Car Position", tag="car_position")
                         dpg.set_axis_limits('full_track_x', -100, 100)
                         dpg.set_axis_limits('full_track_y', -100, 100)
+
     dpg.create_viewport(title='Very Good Simulator', width=1200, height=900)
     dpg.setup_dearpygui()
     dpg.show_viewport()
-    full_path_x, full_path_y = simulator.get_full_path()
-    dpg.set_value('full_map', [full_path_x, full_path_y])
-    dpg.set_axis_limits('full_track_x', min(full_path_x) - 1, max(full_path_x) + 1)
-    dpg.set_axis_limits('full_track_y', min(full_path_y) - 1, max(full_path_y) + 1)
+
+def run(cfgs=None):
+    simulator = Simulator(cfgs)
+    if cfgs.controller == 'purepursuit':
+        controller = PurePursuit(cfgs)
+    elif cfgs.controller == 'mpc':
+        controller = MPC(cfgs)
+    else:
+        raise Exception("controller empty!")
+    state = simulator.get_state()
+    cmd = ControlCommand(0, 0)
+    time = 0
+    time_ = [0]
+    if cfgs.visual:
+        init_gui(simulator=simulator)
+        full_path_x, full_path_y = simulator.get_full_path()
+        dpg.set_value('full_map', [full_path_x, full_path_y])
+        dpg.set_axis_limits('full_track_x', min(full_path_x) - 1, max(full_path_x) + 1)
+        dpg.set_axis_limits('full_track_y', min(full_path_y) - 1, max(full_path_y) + 1)
     while True and not simulator.is_finished():
-        if time - time_[-1] > 0.1:
-            dpg.render_dearpygui_frame()
-            time_.append(time)
         time_1 = time__.time()
         time += cfgs.step_time
         simulator.next_step(state, cmd)
         state = simulator.get_state()
-        dpg.set_value('car_position', [[state.x], [state.y]])
-        dpg.set_value('car_position_part', [[0], [0]])
         path = simulator.get_path()
         controller.set_path(path)
         controller.set_state(state)
@@ -126,24 +125,28 @@ if __name__ == "__main__":
             ref_y.append(i[0])
             ref_x.append(-i[1])
             ref_theta.append(i[2])
-        pre_path = controller.get_pre_path()
-        pre_x = []
-        pre_y = []
-        for i in pre_path:
-            pre_y.append(i[0])
-            pre_x.append(-i[1])
-        dpg.set_value('ref_path', [ref_x, ref_y])
-        dpg.set_value('pre_path', [pre_x, pre_y])
-        dpg.set_axis_limits('xaxis', min(ref_x) - 0.4, max(ref_x) + 0.4)
-        dpg.set_axis_limits('yaxis',- 0.1, max(ref_y) + 0.1)
-        dpg.set_value('lap_info', f"Time: {simulator.get_sim_time():.2f}s")
-        dpg.set_value('theta', state.theta)
+        if cfgs.controller == 'mpc':
+            pre_path = controller.get_pre_path()
+            pre_x = []
+            pre_y = []
+            for i in pre_path:
+                pre_y.append(i[0])
+                pre_x.append(-i[1])
+            if cfgs.visual:
+                dpg.set_value('pre_path', [pre_x, pre_y])
         v_l = state.v - cfgs.model.L * state.omega / 2
         v_r = state.v + cfgs.model.L * state.omega / 2
-        dpg.set_value('vl', v_l)
-        dpg.set_value('vr', v_r)
-        dpg.set_value('r', state.omega)
         if cfgs.visual:
+            dpg.set_value('car_position', [[state.x], [state.y]])
+            dpg.set_value('car_position_part', [[0], [0]])
+            dpg.set_value('ref_path', [ref_x, ref_y])
+            dpg.set_axis_limits('xaxis', min(ref_x) - 0.4, max(ref_x) + 0.4)
+            dpg.set_axis_limits('yaxis',- 0.1, max(ref_y) + 0.1)
+            dpg.set_value('lap_info', f"Time: {simulator.get_sim_time():.2f}s")
+            dpg.set_value('theta', state.theta)
+            dpg.set_value('vl', v_l)
+            dpg.set_value('vr', v_r)
+            dpg.set_value('r', state.omega)
             dpg.render_dearpygui_frame()
             time_2 = time__.time()
             if cfgs.step_time > time_2 - time_1:
@@ -153,3 +156,9 @@ if __name__ == "__main__":
             break
     
     time__.sleep(10)
+
+if __name__ == "__main__":
+    with open('config/bot.yaml') as yamlfile:
+        cfgs = yaml.load(yamlfile, Loader=yaml.FullLoader)
+        cfgs = edict(cfgs)
+    run(cfgs)

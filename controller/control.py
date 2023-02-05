@@ -1,7 +1,8 @@
-from math import hypot, cos, sin, atan2, pi
+from math import hypot, cos, sin, atan2, pi, sqrt
 import numpy as np
 import casadi as ca
 import time
+from scipy import interpolate
 
 from utils.type import ControlCommand, State
 
@@ -132,28 +133,33 @@ class MPC:
     
     def calculate_cmd(self):
         desire_v = self.cfg.MPC.desire_v
-        # print(desire_v-self.state.v)
         init_state = []
         init_state.append([0,0,0,self.state.v,self.state.omega])
-        old_theta = 0
+        stot = 0
+        v_old = self.state.v
         for i in range(self.N):
+            path_ref = self.path[stot]
+
+            k = abs(path_ref[4])/pow(sqrt(1+pow(path_ref[3], 2)), 3)
+            r = 1/k
+            v = max(min(min(desire_v, v_old+self.cfg.model.max_a*self.dt), sqrt(self.cfg.model.max_a*r)), 1)
+
             state = []
-            for j in self.path[i]:
+            for j in path_ref[:3]:
                 state.append(j)
-            state.append(self.state.v+(desire_v-self.state.v)/self.N*i)
-            if i != 0:
-                state.append((state[2]-old_theta)/self.dt)
+            state.append(v)
+            state.append(path_ref[3])
             if i == 0:
-                state = [0,0,0,self.state.v+(desire_v-self.state.v)/self.N*i, self.state.omega]
+                state = [0,0,0,self.state.v, self.state.omega]
             init_state.append([state[0],
                                state[1],
                                state[2],
                                state[3],
                                state[4]])
-            old_theta = state[2]
             self.opti.set_value(self.ref_path[i, :], state)
+            stot += int(self.dt*v*100)
+            v_old = v
 
-        # self.opti.set_initial(self.opt_controls, np.zeros((self.N, 2)))
         self.opti.set_initial(self.opt_controls, self.cmd_all)
         init_state = np.array(init_state)
         self.opti.set_initial(self.opt_states, init_state)

@@ -43,10 +43,10 @@ class Simulator:
             raise Exception("please input valid state")
         
         state_next = self.RK4(state, cmd, self.ts)
-        while state_next.theta > 2*pi:
-            state_next.theta -= 2*pi
-        while state_next.theta < - 2*pi:
-            state_next.theta += 2*pi
+        # while state_next.theta > 2*pi:
+        #     state_next.theta -= 2*pi
+        # while state_next.theta < - 2*pi:
+        #     state_next.theta += 2*pi
         self.state = state_next
         self.sim_time += self.cfg.step_time
 
@@ -136,11 +136,26 @@ class Simulator:
             for i in range(x.size-1):
                 stot += hypot(x[i+1]-x[i], y[i+1]-y[i])
             stot = (stot//self.cfg.ds)*self.cfg.ds
+            N = int(stot/self.cfg.ds)
+            unew = np.arange(0, 1.0, 1.0/N)
+            # center
+            # Find the B-spline representation of an N-D curve
+            tck, u = interpolate.splprep([x,y], s=0)
+            # Evaluate a B-spline or its derivatives.
+            out = interpolate.splev(unew, tck)
+            f_x = out[0]
+            f_y = out[1]
+            # get approximate length of track
+            stot = 0
+            for i in range(len(out[0])-1):
+                stot += hypot(out[0][i+1]-out[0][i], out[1][i+1]-out[1][i])
             print("length of track: stot = ", str(round(stot, 2)))
             N = int(stot/self.cfg.ds)
             unew = np.arange(0, 1.0, 1.0/N)
             # center
+            # Find the B-spline representation of an N-D curve
             tck, u = interpolate.splprep([x,y], s=0)
+            # Evaluate a B-spline or its derivatives.
             out = interpolate.splev(unew, tck)
             f_x = out[0]
             f_y = out[1]
@@ -148,11 +163,30 @@ class Simulator:
             # set psic
             dx = np.diff(f_x)
             dy = np.diff(f_y)
-            psic = np.arctan2(dy, dx)
+            theta = np.arctan2(dy, dx)
             psic_final = np.arctan2(f_y[0]-f_y[-1], f_x[0]-f_x[-1])
-            psic = np.append(psic, psic_final)
+            theta = np.append(theta, psic_final)
+
+            for j in range(len(theta)-1):
+                while(theta[j] - theta[j+1] > np.pi):
+                    theta[j+1] = theta[j+1] + 2*np.pi
+                    
+                while(theta[j] - theta[j+1] <= -np.pi):
+                    theta[j+1] = theta[j+1] - 2*np.pi
+
+            s = np.arange(0, stot-0.01, self.cfg.ds)
+            psic = theta[:len(s)]
+            print(len(s), len(psic))
+            t, c, k = interpolate.splrep(s, psic, s=0, k=4)
+            psic_spl = interpolate.BSpline(t, c, k, extrapolate=False)
+            kappac_spl_one = psic_spl.derivative(nu=1)
+            kappac_spl_one = kappac_spl_one(s)
+            kappac_spl_two = psic_spl.derivative(nu=2)
+            kappac_spl_two = kappac_spl_two(s)
+            print(len(f_x), len(theta), len(kappac_spl_one), len(kappac_spl_two))
+
             for i in range(len(f_x)):
-                self.path.append([f_x[i], f_y[i], psic[i]])
+                self.path.append([f_x[i], f_y[i], theta[i], kappac_spl_one[i], kappac_spl_two[i]])
         print(f"Load map: {self.cfg.map_name} finished")
 
     def get_path(self):
@@ -187,7 +221,9 @@ class Simulator:
                 theta -= 2*pi
             path_return.append([D*cos(Phi),
                                 D*sin(Phi),
-                                theta])
+                                theta,
+                                i[3],
+                                i[4]])
         return path_return
         
     def get_full_path(self):
