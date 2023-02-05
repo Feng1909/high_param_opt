@@ -1,5 +1,7 @@
 import yaml
 from easydict import EasyDict as edict
+import random
+
 import sys,os
 sys.path.append(os.getcwd())
 from simulator.simulate import Simulator
@@ -7,9 +9,9 @@ from controller.control import MPC, PurePursuit
 from utils.type import ControlCommand
 
 def run(cfgs=None):
-    with open('ML/data.csv', 'w') as f:
-        s = 'v,omega,ul,ur,v_next,omega_next\n'
-        f.writelines(s)
+    with open('ML/data.csv', 'a') as f:
+        # s = 'v,omega,ul,ur,v_next,omega_next\n'
+        # f.writelines(s)
         s = '0,0,0,0,'
         simulator = Simulator(cfgs)
         if cfgs.controller == 'purepursuit':
@@ -61,4 +63,21 @@ if __name__ == "__main__":
         cfgs = yaml.load(yamlfile, Loader=yaml.FullLoader)
         cfgs = edict(cfgs)
     cfgs.visual = False
-    run(cfgs)
+    # run(cfgs)
+    map_num = 10
+    num = 0
+    while(num < map_num):
+        print(num)
+        try:
+            with open('map/auto_'+str(num)+'.csv', 'w') as f:
+                f.writelines('0,0\n')
+                for i in range(4):
+                    n1 = random.randint(0,100)
+                    n2 = random.randint(0,100)
+                    f.writelines(str(n1/10)+','+str(n2/10)+'\n')
+                f.writelines('0,0')
+            cfgs.map_name = 'map/auto_'+str(num)+'.csv'
+            run(cfgs)
+            num += 1
+        except:
+            pass

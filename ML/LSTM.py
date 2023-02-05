@@ -81,7 +81,7 @@ with fluid.dygraph.guard(place):
     # opt=fluid.optimizer.SGDOptimizer(learning_rate=0.001, parameter_list=model.parameters())#优化器选用SGD随机梯度下降，学习率为0.001.
     opt=fluid.optimizer.AdamOptimizer(learning_rate=0.01, parameter_list=model.parameters()) 
     epochs_num=100#迭代次数
-    batch_size = 10
+    batch_size = 1000
     train_reader = fluid.io.batch(reader=switch_reader(), batch_size=batch_size)
     val_reader = fluid.io.batch(reader=switch_reader(is_val=True), batch_size=batch_size)
     Batch=0
