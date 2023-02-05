@@ -4,6 +4,8 @@ import paddle.fluid.layers as layers
 import pandas as pd
 import numpy as np
 import random
+from paddle.static import InputSpec
+from paddle.jit import to_static
 
 data_path = 'ML/data.csv'
 data = pd.read_csv(data_path)
@@ -55,7 +57,7 @@ class MyLSTMModel(fluid.dygraph.Layer):
     '''
     def __init__(self):
         super(MyLSTMModel,self).__init__()
-        self.rnn = paddle.nn.LSTM(input_size=4, hidden_size=10, num_layers=8)
+        self.rnn = paddle.nn.LSTM(input_size=4, hidden_size=2, num_layers=8)
         self.flatten = paddle.nn.Flatten()
         self.fc=fluid.dygraph.Linear(10,2)
 
@@ -65,7 +67,7 @@ class MyLSTMModel(fluid.dygraph.Layer):
         out, (h, c)=self.rnn(input)
         out =self.flatten(out)
         # print('flatten: ',out.shape)
-        out=self.fc(out)
+        # out=self.fc(out)
         return out
 
 Batch=0
@@ -76,11 +78,13 @@ place = fluid.CPUPlace()
 
 with fluid.dygraph.guard(place):
     model=MyLSTMModel() #模型实例化
+    model_dict= paddle.load('model/LSTMModel.pdparams')
+    model.load_dict(model_dict['model']) #加载模型参数
     # model=MyModel()
     model.train() #训练模式
-    # opt=fluid.optimizer.SGDOptimizer(learning_rate=0.001, parameter_list=model.parameters())#优化器选用SGD随机梯度下降，学习率为0.001.
-    opt=fluid.optimizer.AdamOptimizer(learning_rate=0.01, parameter_list=model.parameters()) 
-    epochs_num=100#迭代次数
+    opt=fluid.optimizer.SGDOptimizer(learning_rate=0.001, parameter_list=model.parameters())#优化器选用SGD随机梯度下降，学习率为0.001.
+    # opt=fluid.optimizer.AdamOptimizer(learning_rate=0.01, parameter_list=model.parameters()) 
+    epochs_num=500 #迭代次数
     batch_size = 1000
     train_reader = fluid.io.batch(reader=switch_reader(), batch_size=batch_size)
     val_reader = fluid.io.batch(reader=switch_reader(is_val=True), batch_size=batch_size)
@@ -121,6 +125,11 @@ with fluid.dygraph.guard(place):
                 all_eval_loss.append(sum(evalavg_loss)/len(evalavg_loss))
         print("epoch:{},batch_id:{},train_loss:{},eval_loss:{}".format(pass_num,batch_id,avg_loss.numpy(),sum(evalavg_loss)/len(evalavg_loss)))     
 
-    fluid.save_dygraph(model.state_dict(),'model/LSTMModel')#保存模型
-    fluid.save_dygraph(opt.state_dict(),'model/LSTMModel')#保存模型
+        # fluid.save_dygraph(model.state_dict(),'model/LSTMModel')#保存模型
+        # fluid.save_dygraph(opt.state_dict(),'model/LSTMModel')#保存模型
+        obj = {'model': model.state_dict(), 'opt': opt.state_dict(), 'epoch': epochs_num}
+        paddle.save(obj, 'model/LSTMModel.pdparams')
+        net = to_static(model,
+                        input_spec=[InputSpec(shape=[1, 1, 4], name='x')])
+        paddle.jit.save(net, 'inference_model/LSTMModel')
     print("Final loss: {}".format(avg_loss.numpy()))    
