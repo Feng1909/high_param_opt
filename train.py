@@ -33,6 +33,7 @@ test_dataset = MyDataset(test,n_in=1,num_features=4)
 paddle.set_device('gpu:0')  # can only be used on AI Studio
 # paddle.set_device('cpu')
 model = paddle.Model(MyLSTMModel())
+model.load('model/final')
 model.prepare(optimizer=paddle.optimizer.Adam(learning_rate=0.001, parameters=model.parameters()),
               loss=paddle.nn.MSELoss(reduction='mean'))
 model.fit(train_dataset,
