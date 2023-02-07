@@ -143,11 +143,13 @@ class Simulator:
 
     def begin(self):
         self.is_running_flag = True
-        print("begin simulation")
+        if self.cfg.is_print:
+            print("begin simulation")
     
     def stop(self):
         self.is_running_flag = False
-        print("stop simulation")
+        if self.cfg.is_print:
+            print("stop simulation")
 
     def is_running(self):
         return self.is_running_flag
@@ -188,7 +190,8 @@ class Simulator:
             stot = 0
             for i in range(len(out[0])-1):
                 stot += hypot(out[0][i+1]-out[0][i], out[1][i+1]-out[1][i])
-            print("length of track: stot = ", str(round(stot, 2)))
+            if self.cfg.is_print:
+                print("length of track: stot = ", str(round(stot, 2)))
             N = int(stot/self.cfg.ds)
             unew = np.arange(0, 1.0, 1.0/N)
             # center
@@ -215,18 +218,17 @@ class Simulator:
 
             s = np.arange(0, stot-0.01, self.cfg.ds)
             psic = theta[:len(s)]
-            print(len(s), len(psic))
             t, c, k = interpolate.splrep(s, psic, s=0, k=4)
             psic_spl = interpolate.BSpline(t, c, k, extrapolate=False)
             kappac_spl_one = psic_spl.derivative(nu=1)
             kappac_spl_one = kappac_spl_one(s)
             kappac_spl_two = psic_spl.derivative(nu=2)
             kappac_spl_two = kappac_spl_two(s)
-            print(len(f_x), len(theta), len(kappac_spl_one), len(kappac_spl_two))
 
             for i in range(len(f_x)):
                 self.path.append([f_x[i], f_y[i], theta[i], kappac_spl_one[i], kappac_spl_two[i]])
-        print(f"Load map: {self.cfg.map_name} finished")
+        if self.cfg.is_print:
+            print(f"Load map: {self.cfg.map_name} finished")
 
     def get_path(self):
         x = self.state.x
@@ -246,7 +248,8 @@ class Simulator:
             self.stop()
             self.is_running_flag = False
             self.finished = True
-            print("mission finished")
+            if self.cfg.is_print:
+                print("mission finished")
         path_return = []
         for i in path_next:
             x1 = i[0]-self.state.x

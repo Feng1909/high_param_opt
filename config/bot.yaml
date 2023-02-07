@@ -2,6 +2,8 @@ step_time: 0.01
 
 is_ai: True # ai or RK4
 
+is_print: False # print or not
+
 initial_position:
   x: 5.0
   y: 5.0
@@ -31,16 +33,35 @@ controller: 'mpc'  # ['mpc', 'purepursuit']
 
 ref_ahead: 50
 
+# MPC:
+#   N: 30
+#   dt: 0.01
+#   desire_v: 1.5
+#   input:
+#     ul: 0.001
+#     ur: 0.001
+#   state:
+#     x: 100
+#     y: 100
+#     theta: 0.2
+#     v: 1
+#     omega: 0.01
+
 MPC:
   N: 30
   dt: 0.01
   desire_v: 1.5
   input:
-    ul: 0.001
-    ur: 0.001
+    ul: 0.0
+    ur: 0.0
   state:
-    x: 100
-    y: 100
-    theta: 0.2
-    v: 1
-    omega: 0.01
+    x: 0.0
+    y: 91.50558252359316
+    theta: 10.0
+    v: 10.0
+    omega: 1.0
+
+# | 363       | -6.68     | 1.0       | 10.0      | 0.0       | 10.0      | 0.0       | 76.34     |
+# |   iter    |  target   |   omega   |   theta   |     u     |     v     |     x     |     y     |
+
+# {'target': -6.649999999999903, 'params': {'omega': 1.0, 'theta': 10.0, 'u': 0.0, 'v': 10.0, 'x': 0.0, 'y': 91.50558252359316}}

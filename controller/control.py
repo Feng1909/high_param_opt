@@ -121,7 +121,8 @@ class MPC:
         
         if self.cfg.MPC.N > self.cfg.ref_ahead:
             raise Exception("ref_ahead should upper than MPC.N")
-        print("successfully initialize mpc")
+        if self.cfg.is_print:
+            print("successfully initialize mpc")
 
     def set_path(self, path):
         if len(path) == 0:
@@ -175,7 +176,8 @@ class MPC:
         t1 = time.time()
         self.calculate_cmd()
         t2 = time.time()
-        print('solve time: ', t2-t1)
+        if self.cfg.is_print:
+            print('solve time: ', t2-t1)
         return self.cmd
     
     def get_pre_path(self):
