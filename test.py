@@ -14,7 +14,7 @@ input_handle = predictor.get_input_handle(input_names[0])
 
 # 设置输入
 # fake_input = np.random.randn(1, 1, 28, 28).astype("float32")
-fake_input = np.array([[[0.6526019700600132,-0.9479607045698846,9.9999998760563,6.092632976836683]]]).astype('float32')
+fake_input = np.array([[[0.02436546,-3.54048419,9.99999996,10.00000008]]]).astype('float32')
 # input_handle.reshape([1, 1, 28, 28])
 input_handle.copy_from_cpu(fake_input)
 
@@ -28,3 +28,4 @@ output_data = output_handle.copy_to_cpu() # numpy.ndarray 类型
 
 print(output_data)
 # 0.16829303 -0.04975733
+# -0.0488644 -3.8709748

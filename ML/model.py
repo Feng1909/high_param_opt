@@ -30,7 +30,6 @@ class MyDataset(paddle.io.Dataset):
         self.y=self.y.reshape((data.shape[0],2))
         self.x=np.array(self.x,dtype='float32')
         self.y=np.array(self.y,dtype='float32')
-        print(self.y[0])
         self.num_sample=len(x)
 
     def __getitem__(self,index):

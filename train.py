@@ -39,7 +39,7 @@ model.prepare(optimizer=paddle.optimizer.Adam(learning_rate=0.001, parameters=mo
 model.fit(train_dataset,
           eval_data=test_dataset,
           eval_freq=1,
-          epochs=10,
+          epochs=100,
           batch_size=1000,
           save_dir='model',
           log_freq=100,
