@@ -1,5 +1,5 @@
 from distutils.cmd import Command
-from math import fabs, cos, sin, hypot, pi, atan2
+from math import fabs, cos, sin, hypot, pi, atan2, acos
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -23,7 +23,7 @@ class Simulator:
                         init_state.v, 
                         init_state.omega)
         self.state = state
-        self.ts = cfg.step_time
+        self.ts = cfg.ts
         self.is_running_flag = False
         self.sim_time = 0
         self.path = []
@@ -31,15 +31,16 @@ class Simulator:
 
         self.load_map()
 
-        self.config = Config("inference_model/LSTMModel.pdmodel", "inference_model/LSTMModel.pdiparams")
-        self.config.disable_gpu()
+        if self.cfg.is_ai:
+            self.config = Config("inference_model/LSTMModel.pdmodel", "inference_model/LSTMModel.pdiparams")
+            self.config.disable_gpu()
 
-        # 创建 PaddlePredictor
-        self.predictor = create_predictor(self.config)
+            # 创建 PaddlePredictor
+            self.predictor = create_predictor(self.config)
 
-        # 获取输入的名称
-        self.input_names = self.predictor.get_input_names()
-        self.input_handle = self.predictor.get_input_handle(self.input_names[0])
+            # 获取输入的名称
+            self.input_names = self.predictor.get_input_names()
+            self.input_handle = self.predictor.get_input_handle(self.input_names[0])
 
     def get_state(self):
         return self.state
@@ -54,11 +55,13 @@ class Simulator:
         if state == None or not self.isvalid(state):
             raise Exception("please input valid state")
         if self.cfg.is_ai == True:
-            state_next = self.ai_infer(state, cmd, self.ts)
+            self.state = self.ai_infer(self.state, cmd, self.ts)
         else:
-            state_next = self.RK4(state, cmd, self.ts)
-        self.state = state_next
-        self.sim_time += self.cfg.step_time
+            for i in range(int(self.cfg.ts / self.cfg.step_time)):
+                self.state = self.RK4(self.state, cmd, self.ts)
+        self.sim_time += self.cfg.ts
+        # self.state = state_next
+        # self.sim_time += self.cfg.step_time
 
     def isvalid(self, state):
         x = state.x
@@ -192,6 +195,8 @@ class Simulator:
                 stot += hypot(out[0][i+1]-out[0][i], out[1][i+1]-out[1][i])
             if self.cfg.is_print:
                 print("length of track: stot = ", str(round(stot, 2)))
+            with open('ML/length.txt', 'a') as f:
+                f.writelines(str(round(stot, 2))+'\n')
             N = int(stot/self.cfg.ds)
             unew = np.arange(0, 1.0, 1.0/N)
             # center
@@ -229,6 +234,9 @@ class Simulator:
                 self.path.append([f_x[i], f_y[i], theta[i], kappac_spl_one[i], kappac_spl_two[i]])
         if self.cfg.is_print:
             print(f"Load map: {self.cfg.map_name} finished")
+    
+    def get_diff(self):
+        return self.l
 
     def get_path(self):
         x = self.state.x
@@ -236,11 +244,29 @@ class Simulator:
         min_now = 9999
         index = -1
         num = 0
+        a_1 = []
+        a_2 = []
+        b = [x,y]
         for i in self.path:
             if hypot(x - i[0], y - i[1]) < min_now:
                 min_now = hypot(x - i[0], y - i[1])
                 index = num
+                a_2 = a_1
+                a_1 = [i[0], i[1]]
             num += 1
+        
+        # cal l #
+        if a_2 != []:
+            a1_b = [b[0]-a_1[0], b[1]-a_1[1]]
+            a1_a2 = [a_2[0]-a_1[0], a_2[1]-a_1[1]]
+            self.l = abs(hypot(a1_b[0], a1_b[1])) * sin(acos(abs(
+                (a1_a2[0]*a1_b[0]+a1_a2[1]*a1_b[1]) /
+                (hypot(a1_a2[0], a1_a2[1])*hypot(a1_b[0], a1_b[1]))
+            )))
+        else:
+            self.l = hypot(a_1[0]-b[0], a_1[1]-b[1])
+        # print(self.l)
+
         if index == -1:
             raise Exception("find location error")
         path_next = self.path[index+1: index+1+self.cfg.ref_ahead]

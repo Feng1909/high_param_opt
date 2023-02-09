@@ -1,0 +1,10 @@
+# Ignore catkin generated folders
+devel/
+devel/*
+build/
+build/*
+logs/
+logs/*
+**/.vscode/
+**/__pychache__/
+data.csv

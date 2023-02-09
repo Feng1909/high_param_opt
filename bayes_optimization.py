@@ -1,6 +1,8 @@
 import yaml
 from easydict import EasyDict as edict
 from bayes_opt import BayesianOptimization
+from bayes_opt.logger import JSONLogger
+from bayes_opt.event import Events
 
 import sys,os
 sys.path.append(os.getcwd())
@@ -33,11 +35,13 @@ def run(u, x, y, theta, v, omega):
     time = 0
     time_ = [0]
     try:
+        diff = 0
         while True and not simulator.is_finished():
-            time += cfgs.step_time
+            time += cfgs.ts
             simulator.next_step(state, cmd)
             state = simulator.get_state()
             path = simulator.get_path()
+            diff += simulator.get_diff()
             controller.set_path(path)
             controller.set_state(state)
             cmd = controller.get_cmd()
@@ -60,10 +64,10 @@ def run(u, x, y, theta, v, omega):
             v_r = state.v + cfgs.model.L * state.omega / 2
             # break
             if time >= 20:
-                break
-        return -time
+                return -10000
+        return -diff
     except:
-        return -1000
+        return -10000
 
 if __name__ == "__main__":
     pbounds = {'u': (0, 10), 'x': (0, 100), 'y': (0, 100),
@@ -79,6 +83,8 @@ if __name__ == "__main__":
                'theta': 0.2, 'v': 1, 'omega': 0.01},
         lazy=True,
     )
+    logger = JSONLogger(path="./logs.json")
+    optimizer.subscribe(Events.OPTIMIZATION_STEP, logger)
 
     optimizer.maximize(
         init_points=100,
