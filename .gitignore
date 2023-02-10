@@ -8,3 +8,5 @@ logs/*
 **/.vscode/
 **/__pychache__/
 data.csv
+data_eval.csv
+data_train.csv

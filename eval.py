@@ -6,7 +6,7 @@ import random
 
 from ML.model import MyDataset, MyLSTMModel
 
-data_path = 'ML/data.csv'
+data_path = 'ML/data_eval.csv'
 data = pd.read_csv(data_path)
 data.info()
 print(data.head(3))
@@ -23,11 +23,11 @@ paddle.set_device('gpu:0')
 model = paddle.Model(MyLSTMModel())
 model.load('model/final')
 model.prepare(metrics=paddle.metric.Accuracy())
-callback = paddle.callbacks.VisualDL(log_dir='visualdl_log_dir')
+# callback = paddle.callbacks.VisualDL(log_dir='visualdl_log_dir')
 # evaluate(eval_data, batch_size=1, log_freq=10, verbose=2, num_workers=0, callbacks=None, num_iters=None)
 result = model.evaluate(eval_dataset,
                batch_size=1000,
                log_freq=10,
-               callbacks=callback,
+            #    callbacks=callback,
                verbose=1)
 print(result)
