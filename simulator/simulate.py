@@ -4,8 +4,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 from scipy import interpolate
-from paddle.inference import Config
-from paddle.inference import create_predictor
+# from paddle.inference import Config
+# from paddle.inference import create_predictor
 
 from utils.type import State, ControlCommand
 

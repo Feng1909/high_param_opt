@@ -19,8 +19,8 @@ map:
 
 model:
   L: 0.308
-  max_a: 1
-  max_v: 0.28
+  max_a: 2
+  max_v: 0.5
 
 map_name: "map/spline.csv"
 
@@ -32,20 +32,20 @@ visual: true
 
 controller: 'mpc'  # ['mpc', 'purepursuit']
 
-ref_ahead: 50
+ref_ahead: 20
 
 MPC:
-  N: 30
+  N: 20
   dt: 0.01
-  desire_v: 1.5
+  desire_v: 0.2
   input:
     ul: 0.001
     ur: 0.001
   state:
     x: 100
     y: 100
-    theta: 0.2
-    v: 1
+    theta: 0.5
+    v: 10
     omega: 0.01
 
 # MPC:

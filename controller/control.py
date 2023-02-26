@@ -143,7 +143,7 @@ class MPC:
 
             k = abs(path_ref[4])/pow(sqrt(1+pow(path_ref[3], 2)), 3)
             r = 1/k
-            v = max(min(min(desire_v, v_old+self.cfg.model.max_a*self.dt), sqrt(self.cfg.model.max_a*r)), 1)
+            v = max(min(min(desire_v, v_old+self.cfg.model.max_a*self.dt), sqrt(self.cfg.model.max_a*r)), 0.1)
 
             state = []
             for j in path_ref[:3]:

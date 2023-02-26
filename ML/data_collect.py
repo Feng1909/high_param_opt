@@ -54,7 +54,7 @@ def run(cfgs=None):
             v_l = state.v - cfgs.model.L * state.omega / 2
             v_r = state.v + cfgs.model.L * state.omega / 2
             # break
-            if time >= 100:
+            if time >= 700:
                 break
         with open('ML/time.txt', 'a') as f:
             f.writelines(str(round(time, 2))+'\n')
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     map_num = 10000
     num = 0
     while(num < map_num):
-        print(num)
+        # print(num)
         try:
             with open('map/auto_'+str(num)+'.csv', 'w') as f:
                 f.writelines('0,0\n')
