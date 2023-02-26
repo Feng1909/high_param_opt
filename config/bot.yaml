@@ -18,10 +18,9 @@ map:
   y: 20.0
 
 model:
-  L: 0.1
-  max_a: 10
-  max_v: 10
-  lf: 0.1
+  L: 0.308
+  max_a: 1
+  max_v: 0.28
 
 map_name: "map/spline.csv"
 
