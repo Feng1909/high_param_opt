@@ -31,16 +31,16 @@ class Simulator:
 
         self.load_map()
 
-        if self.cfg.is_ai:
-            self.config = Config("inference_model/LSTMModel.pdmodel", "inference_model/LSTMModel.pdiparams")
-            self.config.disable_gpu()
+        # if self.cfg.is_ai:
+        #     self.config = Config("inference_model/LSTMModel.pdmodel", "inference_model/LSTMModel.pdiparams")
+        #     self.config.disable_gpu()
 
-            # 创建 PaddlePredictor
-            self.predictor = create_predictor(self.config)
+        #     # 创建 PaddlePredictor
+        #     self.predictor = create_predictor(self.config)
 
-            # 获取输入的名称
-            self.input_names = self.predictor.get_input_names()
-            self.input_handle = self.predictor.get_input_handle(self.input_names[0])
+        #     # 获取输入的名称
+        #     self.input_names = self.predictor.get_input_names()
+        #     self.input_handle = self.predictor.get_input_handle(self.input_names[0])
 
     def get_state(self):
         return self.state
@@ -54,11 +54,11 @@ class Simulator:
             return
         if state == None or not self.isvalid(state):
             raise Exception("please input valid state")
-        if self.cfg.is_ai == True:
-            self.state = self.ai_infer(self.state, cmd, self.ts)
-        else:
-            for i in range(int(self.cfg.ts / self.cfg.step_time)):
-                self.state = self.RK4(self.state, cmd, self.ts)
+        # if self.cfg.is_ai == True:
+        #     self.state = self.ai_infer(self.state, cmd, self.ts)
+        # else:
+        for i in range(int(self.cfg.ts / self.cfg.step_time)):
+            self.state = self.RK4(self.state, cmd, self.cfg.step_time)
         self.sim_time += self.cfg.ts
         # self.state = state_next
         # self.sim_time += self.cfg.step_time
@@ -73,33 +73,33 @@ class Simulator:
             return False
         return True
     
-    def ai_infer(self, state, control, ts):
-        # fake_input = np.array([[[0.6526019700600132,-0.9479607045698846,9.9999998760563,6.092632976836683]]]).astype('float32')
-        input_date = np.array([[[state.v, state.omega, control.u_l, control.u_r]]]).astype('float32')
-        self.input_handle.copy_from_cpu(input_date)
+    # def ai_infer(self, state, control, ts):
+    #     # fake_input = np.array([[[0.6526019700600132,-0.9479607045698846,9.9999998760563,6.092632976836683]]]).astype('float32')
+    #     input_date = np.array([[[state.v, state.omega, control.u_l, control.u_r]]]).astype('float32')
+    #     self.input_handle.copy_from_cpu(input_date)
 
-        # 运行 predictor
-        self.predictor.run()
+    #     # 运行 predictor
+    #     self.predictor.run()
 
-        # 获取输出
-        output_names = self.predictor.get_output_names()
-        output_handle = self.predictor.get_output_handle(output_names[0])
-        output_data = output_handle.copy_to_cpu() # numpy.ndarray 类型
+    #     # 获取输出
+    #     output_names = self.predictor.get_output_names()
+    #     output_handle = self.predictor.get_output_handle(output_names[0])
+    #     output_data = output_handle.copy_to_cpu() # numpy.ndarray 类型
 
-        v_next, omega_next = output_data[0]
-        omega_tmp = (omega_next + state.omega)/2
-        v_tmp = (v_next + state.v)/2
-        theta_next = omega_tmp*ts + state.theta
-        theta_tmp = (theta_next + state.theta)/2
-        x_next = v_tmp*cos(theta_tmp)*ts + state.x
-        y_next = v_tmp*sin(theta_tmp)*ts + state.y
+    #     v_next, omega_next = output_data[0]
+    #     omega_tmp = (omega_next + state.omega)/2
+    #     v_tmp = (v_next + state.v)/2
+    #     theta_next = omega_tmp*ts + state.theta
+    #     theta_tmp = (theta_next + state.theta)/2
+    #     x_next = v_tmp*cos(theta_tmp)*ts + state.x
+    #     y_next = v_tmp*sin(theta_tmp)*ts + state.y
 
-        state = State(x_next,
-                      y_next,
-                      theta_next,
-                      max(v_next, 0),
-                      omega_next)
-        return state
+    #     state = State(x_next,
+    #                   y_next,
+    #                   theta_next,
+    #                   max(v_next, 0),
+    #                   omega_next)
+    #     return state
         
 
     def RK4(self, state, control, ts):

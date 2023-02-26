@@ -2,7 +2,7 @@ step_time: 0.001
 
 ts: 0.04
 
-is_ai: True # ai or RK4
+is_ai: False # ai or RK4
 
 is_print: False # print or not
 
@@ -20,7 +20,7 @@ map:
 model:
   L: 0.308
   max_a: 2
-  max_v: 0.5
+  max_v: 1
 
 map_name: "map/spline.csv"
 
@@ -44,26 +44,6 @@ MPC:
   state:
     x: 100
     y: 100
-    theta: 0.5
+    theta: 0.3
     v: 10
     omega: 0.01
-
-# MPC:
-#   N: 30
-#   dt: 0.01
-#   desire_v: 1.5
-#   input:
-#     ul: 0.0
-#     ur: 0.0
-#   state:
-#     x: 0.0
-#     y: 91.50558252359316
-#     theta: 10.0
-#     v: 10.0
-#     omega: 1.0
-
-# | 363       | -6.68     | 1.0       | 10.0      | 0.0       | 10.0      | 0.0       | 76.34     |
-# |   iter    |  target   |   omega   |   theta   |     u     |     v     |     x     |     y     |
-
-# {'target': -6.649999999999903, 'params': {'omega': 1.0, 'theta': 10.0, 'u': 0.0, 'v': 10.0, 'x': 0.0, 'y': 91.50558252359316}}
-# {"omega": 0.01988013383979559, "theta": 0.2621098687771928, "u": 0.28306488020794607, "v": 2.462110676030459, "x": 86.0027948682888, "y": 53.883106434165285}
