@@ -10,3 +10,5 @@ logs/*
 data.csv
 data_eval.csv
 data_train.csv
+ML/__pychache__
+simulator/__pychache__/

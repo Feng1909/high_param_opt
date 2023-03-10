@@ -7,8 +7,8 @@ is_ai: False # ai or RK4
 is_print: False # print or not
 
 initial_position:
-  x: 5.0
-  y: 5.0
+  x: -1.5
+  y: -0.15
   theta: 0.9
   v: 0.0
   omega: 0.0

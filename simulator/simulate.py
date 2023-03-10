@@ -171,8 +171,8 @@ class Simulator:
                 i = i.replace('\n', '')
                 i = i.replace(' ', '')
                 coordinates = i.split(',')
-                x.append(float(coordinates[0])+self.cfg.initial_position.x)
-                y.append(float(coordinates[1])+self.cfg.initial_position.y)
+                x.append(float(coordinates[0]))
+                y.append(float(coordinates[1]))
             x = np.array(x)
             y = np.array(y)
             # get approximate length of track
