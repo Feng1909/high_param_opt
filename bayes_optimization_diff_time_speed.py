@@ -36,6 +36,7 @@ def run(u, x, y, theta, v, omega):
     time_ = [0]
     try:
         diff = 0
+        v_total = 0
         while True and not simulator.is_finished():
             time += cfgs.ts
             simulator.next_step(state, cmd)
@@ -62,10 +63,11 @@ def run(u, x, y, theta, v, omega):
                     pre_x.append(-i[1])
             v_l = state.v - cfgs.model.L * state.omega / 2
             v_r = state.v + cfgs.model.L * state.omega / 2
+            v_total += state.v
             # break
             if time >= 200:
                 return -5000
-        return -diff
+        return -diff-time*0.5-v_total/time*0.8
     except:
         return -10000
 
@@ -83,7 +85,7 @@ if __name__ == "__main__":
                'theta': 1, 'v': 1, 'omega': 0.01},
         lazy=True,
     )
-    logger = JSONLogger(path="./logs_diff.json")
+    logger = JSONLogger(path="./logs_diff_time_speed.json")
     optimizer.subscribe(Events.OPTIMIZATION_STEP, logger)
 
     optimizer.maximize(

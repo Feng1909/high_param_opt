@@ -65,7 +65,7 @@ def run(u, x, y, theta, v, omega):
             # break
             if time >= 200:
                 return -5000
-        return -diff
+        return -diff-time*0.5
     except:
         return -10000
 
@@ -83,7 +83,7 @@ if __name__ == "__main__":
                'theta': 1, 'v': 1, 'omega': 0.01},
         lazy=True,
     )
-    logger = JSONLogger(path="./logs_diff.json")
+    logger = JSONLogger(path="./logs_diff_time.json")
     optimizer.subscribe(Events.OPTIMIZATION_STEP, logger)
 
     optimizer.maximize(
