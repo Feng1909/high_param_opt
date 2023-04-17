@@ -56,4 +56,14 @@ for state in datas:
 
 # print(len(datas))
 datas.sort(key=lambda e:e[1])
-print(datas)
+# print(datas)
+with open('finetune.csv', 'w') as f:
+    # s = 'v,omega,ul,ur,v_next,omega_next\n'
+    s = ''
+    for data in datas:
+        if data[0] == 'delta_state':
+            s += str(data[2][0])+','+str(data[2][1])+'\n'
+            f.writelines(s)
+            s = str(data[2][0])+','+str(data[2][1])+','
+        if data[0] == 'cmd':
+            s += str(data[2][0])+','+str(data[2][1])+','

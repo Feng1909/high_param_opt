@@ -1,6 +1,6 @@
 step_time: 0.001
 
-ts: 0.04
+ts: 0.1
 
 is_ai: False # ai or RK4
 
@@ -42,8 +42,8 @@ MPC:
     ul: 0.001
     ur: 0.001
   state:
-    x: 100
-    y: 100
-    theta: 0.3
-    v: 10
+    x: 10
+    y: 10
+    theta: 1
+    v: 1
     omega: 0.01

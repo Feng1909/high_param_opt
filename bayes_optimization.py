@@ -63,14 +63,14 @@ def run(u, x, y, theta, v, omega):
             v_l = state.v - cfgs.model.L * state.omega / 2
             v_r = state.v + cfgs.model.L * state.omega / 2
             # break
-            if time >= 20:
+            if time >= 100:
                 return -10000
         return -diff
     except:
         return -10000
 
 if __name__ == "__main__":
-    pbounds = {'u': (0, 10), 'x': (0, 100), 'y': (0, 100),
+    pbounds = {'u': (0, 1), 'x': (5, 15), 'y': (5, 15),
                'theta': (0, 10), 'v': (0, 10), 'omega': (0, 1)}
     optimizer = BayesianOptimization(
         f=run,
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     )
 
     optimizer.probe(
-        params={'u': 0.001, 'x': 99, 'y': 99,
-               'theta': 0.2, 'v': 1, 'omega': 0.01},
+        params={'u': 0.001, 'x': 10, 'y': 10,
+               'theta': 1, 'v': 1, 'omega': 0.01},
         lazy=True,
     )
     logger = JSONLogger(path="./logs.json")

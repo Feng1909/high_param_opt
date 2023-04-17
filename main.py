@@ -113,6 +113,7 @@ def run(cfgs=None):
         time_1 = time__.time()
         time += cfgs.step_time
         simulator.next_step(state, cmd)
+        print(cmd.u_l, cmd.u_r)
         state = simulator.get_state()
         path = simulator.get_path()
         controller.set_path(path)
