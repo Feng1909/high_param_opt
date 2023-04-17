@@ -6,7 +6,7 @@ import random
 
 from ML.model import MyDataset, MyLSTMModel
 
-data_path = 'ML/data_eval.csv'
+data_path = 'ML/data.csv'
 data = pd.read_csv(data_path)
 data.info()
 print(data.head(3))
